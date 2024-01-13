@@ -1,0 +1,66 @@
+<!-- create_expense.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Expense</title>
+    <script>
+        // JavaScript function to dynamically add participant fields
+        function addParticipant() {
+            var container = document.getElementById("participants-container");
+            var newParticipant = document.createElement("div");
+            newParticipant.innerHTML = `
+                <label for="participant_name">Participant Name:</label>
+                <input type="text" name="participant_names[]" required>
+                <label for="participant_amount">Amount Owed:</label>
+                <input type="number" name="participant_amounts[]" required>
+                <button type="button" onclick="removeParticipant(this)">Remove</button>
+                <br>
+            `;
+            container.appendChild(newParticipant);
+        }
+
+        // JavaScript function to remove participant fields
+        function removeParticipant(button) {
+            var container = document.getElementById("participants-container");
+            container.removeChild(button.parentNode);
+        }
+    </script>
+</head>
+<body>
+    <h1>Create New Expense</h1>
+
+    <form method="post" action="{{ url_for('expenses') }}">
+        {{ form.csrf_token }}
+        <!-- Render other form fields as needed -->
+        <label for="description">Expense Description:</label>
+        {{ form.description }}
+        <br>
+        <label for="amount">Total Amount:</label>
+        {{ form.amount }}
+        <br>
+
+        <!-- Participants container for dynamic fields -->
+        <div id="participants-container">
+            <!-- Initial participant fields -->
+            <label for="participant_name">Participant Name:</label>
+            <input type="text" name="participant_names[]" required>
+            <label for="participant_amount">Amount Owed:</label>
+            <input type="number" name="participant_amounts[]" required>
+            <br>
+        </div>
+
+        <!-- Button to add more participants dynamically -->
+        <button type="button" onclick="addParticipant()">Add Participant</button>
+
+        <br>
+        <button type="submit">Create Expense</button>
+    </form>
+
+    <!-- Link to go back to the main dashboard -->
+    <a href="{{ url_for('dashboard') }}">Go back to Dashboard</a>
+
+    <!-- Add other HTML content as needed -->
+</body>
+</html>

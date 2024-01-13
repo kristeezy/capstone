@@ -1,0 +1,48 @@
+<!-- expenses.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expenses</title>
+</head>
+<body>
+    <h1>Expenses</h1>
+    <table>
+        <tr>
+            <th>Description</th>
+            <th>Total Amount</th>
+            <th>Participants</th>
+            <th>Action</th>
+        </tr>
+        {% for expense in expenses %}
+            <tr>
+                <td>{{ expense.description }}</td>
+                <td>{{ expense.amount }}</td>
+                <td>
+                    {% for participant in expense.participants %}
+                        {{ participant.name }} owes {{ participant.amount }}
+                        <br>
+                    {% endfor %}
+                </td>
+                <td>
+                    <a href="{{ url_for('modify_expense', expense_id=expense.id) }}">Modify</a>
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+
+    <!-- Link to clear expenses -->
+    <form method="post" action="{{ url_for('expenses') }}">
+        <input type="hidden" name="action" value="clear">
+        <button type="submit">Clear Expenses</button>
+    </form>
+    
+    
+
+    <!-- Link to go back to the main dashboard -->
+    <a href="{{ url_for('dashboard') }}">Go back to Dashboard</a>
+
+    <!-- Add other HTML content as needed -->
+</body>
+</html>

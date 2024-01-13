@@ -1,0 +1,33 @@
+<!-- modify_expense.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modify Expense</title>
+</head>
+<body>
+    <h1>Modify Expense</h1>
+
+    <!-- modify_expense.html -->
+<form method="post" action="{{ url_for('modify_expense', expense_id=expense.id) }}">
+    {{ form.hidden_tag() }}
+    {{ get_flashed_messages() }}
+    <!-- Include the existing expense details in the form -->
+    <label for="description">Expense Description:</label>
+    <input type="text" name="description" value="{{ expense.description }}" required>
+    <br>
+    <label for="amount">Total Amount:</label>
+    <input type="number" name="amount" value="{{ expense.amount }}" required>
+    <br>
+
+    <!-- Include logic to display and modify participants if needed -->
+
+    <button type="submit">Modify Expense</button>
+</form>
+
+
+    <!-- Include a link to go back to the expenses page -->
+    <a href="{{ url_for('expenses') }}">Go back to Expenses</a>
+</body>
+</html>
