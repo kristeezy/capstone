@@ -58,6 +58,16 @@
         <button type="submit">Create Expense</button>
     </form>
 
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+        <ul class="flashes">
+            {% for message in messages %}
+                <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+{% endwith %}
+
     <!-- Link to go back to the main dashboard -->
     <a href="{{ url_for('dashboard') }}">Go back to Dashboard</a>
 
