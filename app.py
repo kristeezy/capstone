@@ -8,6 +8,7 @@ from flask_migrate import Migrate
 from flask_wtf.csrf import CSRFProtect
 from flask_bcrypt import Bcrypt  
 from sqlalchemy.orm import relationship, joinedload
+from vonage import Client
 
 password = 'user_password'
 
@@ -21,6 +22,13 @@ bcrypt = Bcrypt(app)
 
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
+
+VONAGE_API_KEY = 'b4ce559d'
+VONAGE_API_SECRET = 'SqPh72XsWUV09jLq'
+VONAGE_PHONE_NUMBER = '14142840015'
+
+# Create a Vonage client
+vonage_client = Client(key=VONAGE_API_KEY, secret=VONAGE_API_SECRET)
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
@@ -72,6 +80,7 @@ def parse_participants(participants_input):
         participant = Participant(name=name, amount=float(amount))
         participants.append(participant)
     return participants
+
 
 class PhoneNumberForm(FlaskForm):
     phone_number = StringField('Phone Number', validators=[DataRequired()])
@@ -141,7 +150,6 @@ def login():
 
         if user and user.check_password(password):
             login_user(user)
-            flash('Login successful!', 'success')  # Flash a success message
             return redirect(url_for('dashboard'))
 
         flash('Invalid username or password', 'danger')  # Flash an error message
@@ -149,6 +157,14 @@ def login():
     return render_template('login.html', form=form)
 
 def create_new_expense(description, amount, user_id, participants):
+    # Calculate the total participants' share
+    total_participants_share = sum(participant.amount for participant in participants)
+
+    # Check if the total participants' share exceeds the total bill amount
+    if total_participants_share > amount:
+        flash('Total participants\' share cannot exceed the total bill amount.', 'danger')
+        return
+
     # Create a new Expense instance
     expense = Expense(description=description, amount=amount, user_id=user_id)
 
@@ -164,6 +180,7 @@ def create_new_expense(description, amount, user_id, participants):
 
 
 
+
 # Updated create_expense route
 @app.route('/create_expense', methods=['GET', 'POST'])
 @login_required
@@ -175,10 +192,19 @@ def create_expense():
         participants_input = form.participants.data
         participants = parse_participants(participants_input)
         
-        create_new_expense(form.description.data, form.amount.data, current_user.id)
-        return redirect(url_for('expenses'))
+        create_new_expense(form.description.data, form.amount.data, current_user.id, form.participants.data) #01/18 added participants
+        return redirect(url_for('create_expenses')) # 01/18 Modified from 'expenses'
 
     expenses = Expense.query.filter_by(user_id=current_user.id).all()
+    if phone_number_form.validate_on_submit():
+        # Save the phone number to the current user
+        current_user.phone_number = phone_number_form.phone_number.data
+        db.session.commit()
+
+        # Send SMS to the provided phone number
+        send_sms(current_user.phone_number, "This is a test SMS message.")  # Customize the SMS message as needed
+
+        flash('Phone number saved and SMS sent successfully!', 'success')
     return render_template('create_expense.html', form=form, expenses=expenses, phone_number_form=phone_number_form)
 
 @app.route('/expenses', methods=['GET', 'POST'])
@@ -210,7 +236,6 @@ def expenses():
 
 
 
-# Add a new route for modifying expenses
 @app.route('/modify_expense/<int:expense_id>', methods=['GET', 'POST'])
 @login_required
 def modify_expense(expense_id):
@@ -224,7 +249,15 @@ def modify_expense(expense_id):
     if form.validate():
         # Update the expense details with the form data
         form.populate_obj(expense)
-        
+
+        # Calculate the total participants' share
+        total_participants_share = sum(participant.amount for participant in expense.participants)
+
+        # Check if the total participants' share exceeds the total bill amount
+        if total_participants_share > expense.amount:
+            flash('Total participants\' share cannot exceed the total bill amount.', 'danger')
+            return redirect(url_for('modify_expense', expense_id=expense_id))
+
         # Include logic to update participants if needed
 
         db.session.commit()
@@ -235,6 +268,19 @@ def modify_expense(expense_id):
     return render_template('modify_expense.html', expense=expense, form=form)
 
 
+def send_sms(to, body): #01/19 adding function to allow for sending SMS
+    try:
+       # sms_body = f"Hello! You owe {expense.amount} for the expense: {expense.description}. Participants: {', '.join(participant.name for participant in expense.participants)}. Thank you!"
+        
+        response = vonage_client.send_message({
+            'from': VONAGE_PHONE_NUMBER,
+            'to': to,
+            'text': body
+        })
+        message = response['messages'][0]
+        print(f"SMS sent successfully to {to}. Message ID: {message['message-id']}")
+    except Exception as e:
+        print(f"Failed to send SMS to {to}. Error: {str(e)}")
 
 
 @app.route('/clear_expenses', methods=['GET', 'POST'])
