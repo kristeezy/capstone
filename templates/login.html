@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Welcome to ExpenseTracker!</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -78,7 +79,9 @@
     </style>
 </head>
 <body>
-    <h1>Expense Tracker Login</h1>
+    <div class="white-background">
+        <table>
+    <h1>Expense Tracker Login</h1><br>
     <form method="post" action="{{ url_for('login') }}">
         {{ form.csrf_token }}
         <label for="username">Username:</label>
@@ -100,6 +103,8 @@
         {% endif %}
     {% endwith %}
 
-    <p>Don't have an account? <a href="{{ url_for('register') }}">Click here to register.</a></p>
+    <br><p>Don't have an account? <a href="{{ url_for('register') }}">Click here to register.</a></p>
+    </table>
+</div>
 </body>
 </html>

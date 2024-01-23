@@ -4,12 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='dashboard.css') }}">
 </head>
 <body>
+    <div class="white-background">
+        <table>
     <h1>Welcome to Your Dashboard, {{ username }}!</h1>
-
-    <!-- Add more content as needed -->
-    <a href="{{ url_for('create_expense') }}">Click here to add a new expense.</a>
-    <a href="{{ url_for('logout_success') }}">Logout</a>
+<br>
+    
+    <a href="{{ url_for('create_expense') }}">Click here to add a new expense.</a><br>
+    <a href="{{ url_for('logout_success') }}">Logout</a><br>
+    </table>
+</div>
 </body>
 </html>

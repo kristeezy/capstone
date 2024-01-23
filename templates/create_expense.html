@@ -5,30 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Expense</title>
-    <script>
-        // JavaScript function to dynamically add participant fields
-        function addParticipant() {
-            var container = document.getElementById("participants-container");
-            var newParticipant = document.createElement("div");
-            newParticipant.innerHTML = `
-                <label for="participant_name">Participant Name:</label>
-                <input type="text" name="participant_names[]" required>
-                <label for="participant_amount">Amount Owed:</label>
-                <input type="number" name="participant_amounts[]" required>
-                <button type="button" onclick="removeParticipant(this)">Remove</button>
-                <br>
-            `;
-            container.appendChild(newParticipant);
-        }
-
-        // JavaScript function to remove participant fields
-        function removeParticipant(button) {
-            var container = document.getElementById("participants-container");
-            container.removeChild(button.parentNode);
-        }
-    </script>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
+    <div class="white-background">
+        <table>
     <h1>Create New Expense</h1>
 
     <form method="post" action="{{ url_for('expenses') }}">
@@ -44,10 +25,10 @@
         <!-- Participants container for dynamic fields -->
         <div id="participants-container">
             <!-- Initial participant fields -->
-            <label for="participant_name">Participant Name:</label>
-            <input type="text" name="participant_names[]" required>
-            <label for="participant_amount">Amount Owed:</label>
-            <input type="number" name="participant_amounts[]" required>
+            <label for="participant_names">Participant Name:</label>
+            <input type="text" name="participant_names" id="participant_names" required>
+            <label for="participant_amounts">Amount Owed:</label>
+            <input type="number" name="participant_amounts" id="participant_amounts" required>
             <br>
         </div>
 
@@ -56,6 +37,13 @@
 
         <br>
         <button type="submit">Create Expense</button>
+
+        <!-- Display error message if present -->
+        {% if error_message %}
+          <div class="alert alert-danger" role="alert">
+              {{ error_message }}
+          </div>
+        {% endif %}
     </form>
 
     {% with messages = get_flashed_messages() %}
@@ -66,11 +54,36 @@
             {% endfor %}
         </ul>
     {% endif %}
-{% endwith %}
+    {% endwith %}
 
     <!-- Link to go back to the main dashboard -->
-    <a href="{{ url_for('dashboard') }}">Go back to Dashboard</a>
+    <br><a href="{{ url_for('dashboard') }}">Go back to Dashboard</a>
 
     <!-- Add other HTML content as needed -->
+
+    <script>
+        // JavaScript function to dynamically add participant fields
+        function addParticipant() {
+            var container = document.getElementById("participants-container");
+            var newParticipant = document.createElement("div");
+            newParticipant.innerHTML = `
+                <label for="participant_name">Participant Name:</label>
+                <input type="text" name="participant_name" required>
+                <label for="participant_amount">Amount Owed:</label>
+                <input type="number" name="participant_amount" required>
+                <button type="button" onclick="removeParticipant(this)">Remove</button>
+                <br>
+            `;
+            container.appendChild(newParticipant);
+        }
+    
+        // JavaScript function to remove participant fields
+        function removeParticipant(button) {
+            var container = document.getElementById("participants-container");
+            container.removeChild(button.parentNode);
+        }
+    </script>
+    </table>
+    </div>
 </body>
 </html>

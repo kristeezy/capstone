@@ -12,7 +12,7 @@ from vonage import Client
 
 password = 'user_password'
 
-app = Flask(__name__, template_folder='templates')
+app = Flask(__name__, static_folder='static', template_folder='templates')
 csrf = CSRFProtect()
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:4648@localhost/users_db'
 app.config['SECRET_KEY'] = 'your_secret_key'  
@@ -62,10 +62,10 @@ class Expense(db.Model):
     description = db.Column(db.String(255), nullable=False)
     amount = db.Column(db.Float, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    user = db.relationship('User', backref='expenses')
+    # user = db.relationship('User', backref='expenses')
     
     # Establish a one-to-many relationship with participants
-    participants = db.relationship('Participant', backref='expense', lazy=True)
+    participant = db.relationship('Participant', backref='expense', lazy=True)
 
 class Participant(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -73,13 +73,13 @@ class Participant(db.Model):
     amount = db.Column(db.Float, nullable=False)
     expense_id = db.Column(db.Integer, db.ForeignKey('expense.id'), nullable=False)
 
-def parse_participants(participants_input):
-    participants = []
-    for part in participants_input.split(','):
+def parse_participant(participant_input):
+    participant = []
+    for part in participant_input.split(','):
         name, amount = part.strip().split(':')
         participant = Participant(name=name, amount=float(amount))
-        participants.append(participant)
-    return participants
+        participant.append(participant)
+    return participant
 
 
 class PhoneNumberForm(FlaskForm):
@@ -99,7 +99,7 @@ class YourLoginForm(FlaskForm):
 class ExpenseForm(FlaskForm):
     description = StringField('Description', render_kw={'placeholder': 'Expense description'}, validators=[DataRequired()])
     amount = StringField('Amount', render_kw={'placeholder': 'Expense amount'}, validators=[DataRequired()])
-    users = StringField('Users', render_kw={'placeholder': 'Comma-separated usernames'}, validators=[DataRequired()])
+    participant = StringField('Participant', render_kw={'placeholder': 'Comma-separated usernames'}, validators=[DataRequired()])
     submit = SubmitField('Create Expense')
 
 with app.app_context():
@@ -156,27 +156,34 @@ def login():
 
     return render_template('login.html', form=form)
 
-def create_new_expense(description, amount, user_id, participants):
+def create_new_expense(description, amount, user_id, participant):
     # Calculate the total participants' share
-    total_participants_share = sum(participant.amount for participant in participants)
+    total_participant_share = sum(participant.amount for participant in participant)
 
-    # Check if the total participants' share exceeds the total bill amount
-    if total_participants_share > amount:
-        flash('Total participants\' share cannot exceed the total bill amount.', 'danger')
-        return
+    # Convert amount to the appropriate type (e.g., float)
+    amount = float(amount)
+
+    # Convert total_participants_share to the same type as amount
+    total_participant_share = float(total_participant_share)
 
     # Create a new Expense instance
     expense = Expense(description=description, amount=amount, user_id=user_id)
 
     # Add participants to the expense
-    for participant in participants:
-        expense.participants.append(participant)
+    for participant in participant:
+        expense.participant.append(participant)
 
     # Add the expense to the session and commit
     db.session.add(expense)
     db.session.commit()
 
     flash('Expense created successfully!', 'success')
+
+    # Check if the total participants' share exceeds the total bill amount
+    if total_participant_share > amount:
+        flash('Total participant\' share cannot exceed the total bill amount.', 'danger')
+        return
+
 
 
 
@@ -189,17 +196,18 @@ def create_expense():
     phone_number_form = PhoneNumberForm()
 
     if form.validate():
-        participants_input = form.participants.data
-        participants = parse_participants(participants_input)
+        participant_input = form.participant.data
+        participant = parse_participant(participant_input)
         
-        create_new_expense(form.description.data, form.amount.data, current_user.id, form.participants.data) #01/18 added participants
-        return redirect(url_for('create_expenses')) # 01/18 Modified from 'expenses'
+        create_new_expense(form.description.data, form.amount.data, current_user.id, form.participant.data) #01/18 added participants
+        return redirect(url_for('create_expense')) # 01/18 Modified from 'expenses'
 
     expenses = Expense.query.filter_by(user_id=current_user.id).all()
-    if phone_number_form.validate_on_submit():
+    if phone_number_form.validate():
         # Save the phone number to the current user
         current_user.phone_number = phone_number_form.phone_number.data
         db.session.commit()
+        
 
         # Send SMS to the provided phone number
         send_sms(current_user.phone_number, "This is a test SMS message.")  # Customize the SMS message as needed
@@ -221,17 +229,20 @@ def expenses():
 
         # Include the logic to process the form data and save expenses
         description = request.form.get('description')  
-        amount = request.form.get('amount')  
+        amount = request.form.get('amount')
 
         # Extract participants from the form data, assuming they are in a comma-separated string
-        participants_str = request.form.get('participants', '')
-        participants = [Participant(name=name, amount=0) for name in participants_str.split(',') if name]
+        participant_str = request.form.get('participant', '')
+        participant = [Participant(name=name, amount=0) for name in participant_str.split(',') if name]
 
-        create_new_expense(description, amount, current_user.id, participants)
+        create_new_expense(description, amount, current_user.id, participant)
+        
+        print(f"POST request received. Description: {description}, Amount: {amount}, Participants: {participant}")
+
         return redirect(url_for('expenses'))
 
     # Handle GET request to display expenses with participants
-    expenses = db.session.query(Expense).options(joinedload(Expense.participants)).filter_by(user_id=current_user.id).all()
+    expenses = db.session.query(Expense).options(joinedload(Expense.participant)).filter_by(user_id=current_user.id).all()
     return render_template('expenses.html', expenses=expenses)
 
 
@@ -251,11 +262,11 @@ def modify_expense(expense_id):
         form.populate_obj(expense)
 
         # Calculate the total participants' share
-        total_participants_share = sum(participant.amount for participant in expense.participants)
+        total_participant_share = sum(participant.amount for participant in expense.participant)
 
         # Check if the total participants' share exceeds the total bill amount
-        if total_participants_share > expense.amount:
-            flash('Total participants\' share cannot exceed the total bill amount.', 'danger')
+        if total_participant_share > expense.amount:
+            flash('Total participant\' share cannot exceed the total bill amount.', 'danger')
             return redirect(url_for('modify_expense', expense_id=expense_id))
 
         # Include logic to update participants if needed

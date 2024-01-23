@@ -1,0 +1,85 @@
+/* Reset some default styles */
+body, h1, h2, h3, p, ul, li {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #7ac5f7;
+    color: #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+}
+
+.header {
+    background-color: #7ac5f7;
+    color: #fff;
+    padding: 10px;
+    text-align: center;
+}
+
+.flash-message {
+    margin-bottom: 20px;
+    padding: 10px;
+    border-radius: 5px;
+    background-color: white; /* Apply white background */
+}
+
+.success {
+    background-color: #2ecc71;
+}
+
+.danger {
+    background-color: #e74c3c;
+}
+
+/* Remove .container and .form-container styles */
+
+.container {
+    margin: 20px;
+}
+
+/* Add some margin and padding to the table */
+table {
+    border-collapse: collapse;
+    width: 100%;
+    background-color: #f2f2f2;
+}
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+th {
+    background-color: #f2f2f2;
+}
+
+.btn {
+    display: inline-block;
+    padding: 8px 16px;
+    margin-top: 10px;
+    background-color: #7ac5f7;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 3px;
+}
+
+.btn:hover {
+    background-color: #7ac5f7;
+}
+
+.table-container {
+    margin: 20px;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* Apply white background to all elements within this class */
+.white-background {
+    background-color: white;
+}
